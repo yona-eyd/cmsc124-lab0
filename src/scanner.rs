@@ -62,7 +62,7 @@ impl Scanner {
             lexeme,
             literal: Literal::None,
             line: self.line,
-         }
+        }
     }
 
     fn make_token_literal(&self, token_type:TokenList, literal: Literal) -> Token {
@@ -102,7 +102,7 @@ impl Scanner {
         if self.at_end() {
             return Err(ScanError {
                 line: start_line,
-                message: "Unterminated string.".to_string();
+                message: "Unterminated string.".to_string(),
             });
         }
         self.advance(); //consume closing quote
@@ -203,4 +203,38 @@ fn keyword_type(text: &str) -> Option<TokenList> {
     })
 }
 
+impl Iterator for Scanner {
+    type Item = Result<Token, ScanError>;
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            if self.at_end() {
+                if !self.emitted_eof {
+                    self.emitted_eof = true;
+                    self.start = self.current;
+                    return Some(Ok(self.make_token(TokenList::Engk)));
+                }
+                return None;
+            }
+            self.start = self.current;
+            match self.scan_token() {
+                Ok(Some(token)) => return Some(Ok(token)),
+                Ok(None)        => continue,
+                Err(e)          => return Some(Err(e)),
+            }
+        }
+    }
+}
 
+impl Scanner {
+    pub fn scan_tokens(self) -> Result<Vec<Token>, Vec<ScanError>> {
+        let mut tokens  = Vec::new();
+        let mut errors  = Vec::new();
+        for result in self {
+            match result {
+                Ok(token)   => tokens.push(token),
+                Err(e)      => errors.push(e),
+            }
+        }
+        if errors.is_empty() { Ok(tokens) } else { Err(errors) }
+    }
+}
