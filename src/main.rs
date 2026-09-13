@@ -7,7 +7,7 @@ use std::fs;
 use std::io::{self, Write};
 use std::process::ExitCode;
 
-fn run(source: &str) {
+fn run(source: &str) -> bool {
     let scanner = Scanner::new(source);
     match scanner.scan_tokens() {
         Ok(tokens) => {
