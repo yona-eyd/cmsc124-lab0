@@ -1,52 +1,65 @@
+// define alphabet of token categories for scanner to identify
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenList{
     //single char tokens
-    LEFTPAREN,
-    RIGHTPAREN,
-    LEFTBRACE,
-    RIGHTBRACE,
-    COMMA,
-    DOT,
-    PLUS,
-    MINUS,
-    STAR,
-    SLASH,
-    MODULO,
-    SEMICOLON,
+    LeftParen,
+    RightParen,
+    LeftBrace,
+    RightBrace,
+    Comma,
+    Dot,
+    Plus,
+    Minus,
+    Star,
+    Slash,
+    Modulo,
+    Semicolon,
     
     // need lookahead
-    NOT, 
-    //NOTEQUAL,
-    ASSIGN,
-    //EQUALTO,
-    GREATER,
-    //GREATEREQL, 
-    LESS,
-    //LESSEQL,
+    Not, 
+    NotEqual,
+    Assign,
+    EqualTo,
+    Greater,
+    GreaterEql, 
+    Less,
+    LessEql,
 
-    ENGK, //EOF
+    Engk, // EOF
+}
+
+// define what values a token can have
+#[derive(Debug, Clone)]
+pub enum Literal {
+    Str(String),
+    Num(f64),
+    None,
+}
+
+impl::fmt Display for Literal {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Literal::Str(s) => write!(f, "{s}"),
+            Literal::Num(n) => write!(f, "{n}"),
+            Literal::None   => write!(f, "null"),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
 pub struct Token{
     pub token_type: TokenList,
-    //pub lexeme: String,
-    //pub literal: char,
-    //pub line: usize,
+    pub lexeme: String,
+    pub literal: char,
+    pub line: usize,
 }
 
-impl Token {
-    pub fn to_string(&self) -> String {
-        //let str = if self.literal == '\0' {
-        //    "null".to_string()
-       // } 
-        //else {
-        //    self.literal.to_string()
-        //};
-
-        format!(
-            "Token (type={:?})",
-            self.token_type
+impl fmt:: Display for Token {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Token(type={?}, lexeme={}, literal={}, line={})",
+            self.token_type, self.lexeme, self.literal, self.line
         )
     }
 }
