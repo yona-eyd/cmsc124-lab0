@@ -1,21 +1,21 @@
-use crate :: tokens :: {Token, TokenList};
+use crate :: tokens :: {Literal, Token, TokenList};
 
 pub struct Scanner {
     source: Vec<char>,
-    tokens: Vec<Token>,
     start: usize,
     current: usize,
-    //line: usize,
+    line: usize,
+    emitted_eof: bool,
 }
 
 impl Scanner {
     pub fn new(source: &str) -> Self {
         Scanner {
             source: source.chars().collect(),
-            tokens: Vec::new(),
             start: 0,
             current: 0,
-            //line: 1,
+            line: 1,
+            emitted_eof: false,
         }
     }
 
@@ -29,51 +29,69 @@ impl Scanner {
         c
     }
 
-    fn add_token(&mut self, token_type: TokenList){
-        self.tokens.push(Token {
+    fn peek_match(&mut self, expected: char) -> bool {
+        if self.at_end() || self.source[self.current] != expected {
+            return false
+        }
+        self.current += 1;
+        true
+    }
+
+    fn one_or_two(&mut self, second:char, one: TokenList, two:TokenList) -> TokenList {
+        if self.peek_match(second){two} else {one}
+    }
+
+    fn make_token(&self, token_type: TokenList) -> Token {
+        let lexeme: String = self.source[self.start..self.current].iter().collect();
+        Token {
             token_type,
-            //lexeme: text,
-            //literal: '\0',
-            //line: self.line,
-        });
+            lexeme,
+            literal: Literal::None,
+            line: self.line,
+         }
     }
 
-    fn scan_token(&mut self){
+    fn scan_token(&mut self) -> Result<Option<Token>, ScanError>{
         let c = self.advance();
-        match c {
-            '(' => self.add_token(TokenList::LEFTPAREN),
-            ')' => self.add_token(TokenList::RIGHTPAREN),
-            '{' => self.add_token(TokenList::LEFTBRACE),
-            '}' => self.add_token(TokenList::RIGHTBRACE),
-            ',' => self.add_token(TokenList::COMMA),
-            '.' => self.add_token(TokenList::DOT),
-            '+' => self.add_token(TokenList::PLUS),
-            '-' => self.add_token(TokenList::MINUS),
-            '*' => self.add_token(TokenList::STAR),
-            '/' => self.add_token(TokenList::SLASH),
-            '%' => self.add_token(TokenList::MODULO),
-            ';' => self.add_token(TokenList::SEMICOLON),
-            '!' => self.add_token(TokenList::NOT),
-            '=' => self.add_token(TokenList::ASSIGN),
-            '>' => self.add_token(TokenList::GREATER),
-            '<' => self.add_token(TokenList::LESS),
-            _ => println!("Unexpected character"),
-        }
-    }
+        
+        let token = match c {
+            '(' => (self.make_token(TokenList::LeftParen)),
+            ')' => (self.make_token(TokenList::RightParen)),
+            '{' => (self.make_token(TokenList::LeftBrace)),
+            '}' => (self.make_token(TokenList::RightBrace)),
+            ',' => (self.make_token(TokenList::Comma)),
+            '.' => (self.make_token(TokenList::Dot)),
+            '+' => (self.make_token(TokenList::Plus)),
+            '-' => (self.make_token(TokenList::Minus)),
+            '*' => (self.make_token(TokenList::Star)),
+            '/' => (self.make_token(TokenList::Slash)),
+            '%' => (self.make_token(TokenList::Modulo)),
+            ';' => (self.make_token(TokenList::Semicolon)),
 
-    pub fn scan_tokens(&mut self) -> &Vec<Token> {
-        while !self.at_end() {
-            self.start = self.current;
-            self.scan_token();
-        }
-        self.tokens.push(Token {
-            token_type: TokenList::ENGK,
-            //lexeme: String::new(),
-            //literal: '\0',
-            //line: self.line,
-        });
-        &self.tokens
+            '!' => {let kind = self.one_or_two('=',TokenList::Not, TokenList::NotEqual); 
+                    Some(self.make_token(kind))}
+            '=' => {let kind = self.one_or_two('=',TokenList::Assign, TokenList::Equal); 
+                    Some(self.make_token(kind))}
+            '>' => {let kind = self.one_or_two('=',TokenList::Great, TokenList::Greater); 
+                    Some(self.make_token(kind))}
+            '<' => {let kind = self.one_or_two('=',TokenList::Less, TokenList::Lesser); 
+                    Some(self.make_token(kind))}
+
+            ' ' | '\r' | '\t' => None,
+            '\n' =>{self.line += 1;
+                    None }
+
+            '"' => return self.string().map(Some),
+
+            other => {
+                return Err(ScanError {
+                    line: self.line,
+                    message: format!("Unexpected character '{other}'"),
+                })
+            }
+
+        };
+        Ok(token)
     }
 }
-
 
