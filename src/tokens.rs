@@ -1,30 +1,31 @@
+// define alphabet of token categories for scanner to identify
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenList{
     //single char tokens
-    LEFTPAREN,
-    RIGHTPAREN,
-    LEFTBRACE,
-    RIGHTBRACE,
-    COMMA,
-    DOT,
-    PLUS,
-    MINUS,
-    STAR,
-    SLASH,
-    MODULO,
-    SEMICOLON,
+    LeftParen,
+    RightParen,
+    LeftBrace,
+    RightBrace,
+    Comma,
+    Dot,
+    Plus,
+    Minus,
+    Star,
+    Slash,
+    Modulo,
+    Semicolon,
     
     // need lookahead
-    NOT, 
-    //NOTEQUAL,
-    ASSIGN,
-    //EQUALTO,
-    GREATER,
-    //GREATEREQL, 
-    LESS,
-    //LESSEQL,
+    Not, 
+    //NotEqual,
+    Assign,
+    //EqualTo,
+    Greater,
+    //GreaterEql, 
+    Less,
+    //LessEql,
 
-    ENGK, //EOF
+    Engk, //EOF
 }
 
 #[derive(Debug, Clone)]
