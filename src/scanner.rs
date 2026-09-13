@@ -8,6 +8,12 @@ pub struct Scanner {
     emitted_eof: bool,
 }
 
+#[derive(Debug)]
+pub struct ScanError {
+    pub line: usize,
+    pub message: String,
+}
+
 impl Scanner {
     pub fn new(source: &str) -> Self {
         Scanner {
@@ -27,6 +33,14 @@ impl Scanner {
         let c = self.source[self.current];
         self.current +=1;
         c
+    }
+
+    fn peek(&self) -> char {
+        if self.at_end() {'\0'} else {self.source[self.current]}
+    }
+
+    fn peek_next(&self) -> char {
+        if self.current +1 >= self.source.len() {'\0'} else {self.source[self.current +1]}
     }
 
     fn peek_match(&mut self, expected: char) -> bool {
@@ -50,6 +64,68 @@ impl Scanner {
             line: self.line,
          }
     }
+
+    fn make_token_literal(&self, token_type:TokenList, literal: Literal) -> Token {
+        let lexeme: String = self.source[self.start..self.current].iter().collect();
+        Token {
+            token_type, 
+            lexeme, 
+            literal, 
+            line: self.line}
+    }
+    //for number literals
+    //consumes digits
+    fn number (&mut self) -> Token {
+        while self.peek().is_ascii_digit(){
+            self.advance();
+        }
+        if self.peek() == '.' && self.peek_next().is_ascii_digit(){
+            self.advance();
+            while self.peek().is_ascii_digit(){
+                self.advance();
+            }
+        }
+        let lexeme: String = self.source[self.start..self.current].iter().collect();
+        let value: f64 = lexeme.parse().expect("scanned number must be valid");
+        self.make_token_literal(TokenList::Number, Literal::Num(value))
+    }
+
+    //for string literals
+    fn string (&mut self) -> Result<Token, ScanError> {
+        let start_line = self.line;
+        while self.peek() != '"' && !self.at_end() {
+            if self.peek() == '\n' {
+                self.line += 1;
+            }
+            self.advance();
+        }
+        if self.at_end() {
+            return Err(ScanError {
+                line: start_line,
+                message: "Unterminated string.".to_string();
+            });
+        }
+        self.advance(); //consume closing quote
+        let value: String = self.source[self.start + 1..self.current - 1].iter().collect(); //source between quotes
+        let lexeme: String = self.source[self.start..self.current].iter().collect();
+        Ok(Token {
+            token_type: TokenList::StringLit,
+            lexeme,
+            literal: Literal::Str(value),
+            line: start_line,
+        })
+    }
+
+    //for identifiers, consumer all characters then check keyword table
+    fn identifier(&mut self) -> Token {
+        while is_identifier_continue(self.peek()) {
+            self.advance();
+        }
+        let text:String = self.source[self.start..self.current].iter().collect();
+        let token_type = keyword_type(&text).unwrap_or(TokenList::Identifier);
+        self.make_token(token_type)
+    }
+
 
     fn scan_token(&mut self) -> Result<Option<Token>, ScanError>{
         let c = self.advance();
@@ -81,7 +157,13 @@ impl Scanner {
             '\n' =>{self.line += 1;
                     None }
 
-            '"' => return self.string().map(Some),
+            '"' => {
+                    let token = self.string()?;
+                    Some(token)}
+
+            c if c.is_ascii_digit() => Some(self.number()),
+            c if is_identifier_start(c) => Some(self.identifier()),
+
 
             other => {
                 return Err(ScanError {
@@ -94,4 +176,31 @@ impl Scanner {
         Ok(token)
     }
 }
+
+fn is_identifier_start(c: char) -> bool {
+    c.is_ascii_alphabetic() || c == '_'
+}
+
+fn is_identifier_continue(c:char) -> bool {
+    c.is_ascii_alphanumeric() || c == '_'
+}
+
+fn keyword_type(text: &str) -> Option<TokenList> {
+    Some(match text {
+        "and" => TokenList::And,
+        "else" => TokenList::Else,
+        "false" => TokenList::False,
+        "true" => TokenList::True,
+        "for" => TokenList::For,
+        "while" => TokenList::While,
+        "if" => TokenList::If,
+        "nil" => TokenList::Nil,
+        "or" => TokenList::Or,
+        "print" => TokenList::Print,
+        "return" => TokenList::Return,
+        "var" => TokenList::Var,
+        _ => return None,
+    })
+}
+
 

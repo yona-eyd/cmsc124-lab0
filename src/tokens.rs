@@ -28,6 +28,24 @@ pub enum TokenList{
     LessEql,
 
     Engk, // EOF
+
+    //identifiers
+    And,
+    If,
+    Else,
+    False,
+    True,
+    For,
+    While,
+    Nil,
+    Or,
+    Print,
+    Return,
+    Var,
+
+    Number,
+    StringLit,
+    Identifier,
 }
 
 // define what values a token can have
