@@ -8,10 +8,18 @@ use std::io::{self, Write};
 use std::process::ExitCode;
 
 fn run(source: &str) {
-    let mut scanner = Scanner::new(source);
-    let scanned = scanner.scan_tokens().clone();
-    for token in &scanned {
-        println!("{}", token.to_string());
+    let scanner = Scanner::new(source);
+    match scanner.scan_tokens() {
+        Ok(tokens) => {
+            for token in &tokens {
+                println!("{token}");
+            }
+        }
+        Err(errors) => {
+            for err in &errors {
+                eprintln!("[line {}] Error: {}", err.line, err.message);
+            }
+        }
     }
 }
 
