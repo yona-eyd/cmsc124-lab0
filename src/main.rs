@@ -14,11 +14,13 @@ fn run(source: &str) {
             for token in &tokens {
                 println!("{token}");
             }
+            true
         }
         Err(errors) => {
             for err in &errors {
                 eprintln!("[line {}] Error: {}", err.line, err.message);
             }
+            false
         }
     }
 }
@@ -31,8 +33,11 @@ fn run_file(path: &str) -> ExitCode {
             return ExitCode::from(70);
         }
     };
-    run(&source);
-    ExitCode::from(0) 
+    if run(&source) {
+        ExitCode::from(0)
+    } else {
+        ExitCode::from(65)  // sysexits, data format error     
+    }
 }
 
 fn run_prompt() -> ExitCode {
