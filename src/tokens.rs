@@ -1,3 +1,5 @@
+use std::fmt;
+
 // define alphabet of token categories for scanner to identify
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenList{
@@ -36,7 +38,7 @@ pub enum Literal {
     None,
 }
 
-impl::fmt Display for Literal {
+impl fmt :: Display for Literal {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Literal::Str(s) => write!(f, "{s}"),
@@ -50,7 +52,7 @@ impl::fmt Display for Literal {
 pub struct Token{
     pub token_type: TokenList,
     pub lexeme: String,
-    pub literal: char,
+    pub literal: Literal,
     pub line: usize,
 }
 
@@ -58,7 +60,7 @@ impl fmt:: Display for Token {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "Token(type={?}, lexeme={}, literal={}, line={})",
+            "Token(type={:?}, lexeme={}, literal={}, line={})",
             self.token_type, self.lexeme, self.literal, self.line
         )
     }
