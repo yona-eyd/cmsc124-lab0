@@ -55,26 +55,26 @@ impl Scanner {
         let c = self.advance();
         
         let token = match c {
-            '(' => (self.make_token(TokenList::LeftParen)),
-            ')' => (self.make_token(TokenList::RightParen)),
-            '{' => (self.make_token(TokenList::LeftBrace)),
-            '}' => (self.make_token(TokenList::RightBrace)),
-            ',' => (self.make_token(TokenList::Comma)),
-            '.' => (self.make_token(TokenList::Dot)),
-            '+' => (self.make_token(TokenList::Plus)),
-            '-' => (self.make_token(TokenList::Minus)),
-            '*' => (self.make_token(TokenList::Star)),
-            '/' => (self.make_token(TokenList::Slash)),
-            '%' => (self.make_token(TokenList::Modulo)),
-            ';' => (self.make_token(TokenList::Semicolon)),
+            '(' => Some(self.make_token(TokenList::LeftParen)),
+            ')' => Some(self.make_token(TokenList::RightParen)),
+            '{' => Some(self.make_token(TokenList::LeftBrace)),
+            '}' => Some(self.make_token(TokenList::RightBrace)),
+            ',' => Some(self.make_token(TokenList::Comma)),
+            '.' => Some(self.make_token(TokenList::Dot)),
+            '+' => Some(self.make_token(TokenList::Plus)),
+            '-' => Some(self.make_token(TokenList::Minus)),
+            '*' => Some(self.make_token(TokenList::Star)),
+            '/' => Some(self.make_token(TokenList::Slash)),
+            '%' => Some(self.make_token(TokenList::Modulo)),
+            ';' => Some(self.make_token(TokenList::Semicolon)),
 
             '!' => {let kind = self.one_or_two('=',TokenList::Not, TokenList::NotEqual); 
                     Some(self.make_token(kind))}
-            '=' => {let kind = self.one_or_two('=',TokenList::Assign, TokenList::Equal); 
+            '=' => {let kind = self.one_or_two('=',TokenList::Assign, TokenList::EqualTo); 
                     Some(self.make_token(kind))}
-            '>' => {let kind = self.one_or_two('=',TokenList::Great, TokenList::Greater); 
+            '>' => {let kind = self.one_or_two('=',TokenList::Greater, TokenList::GreaterEql); 
                     Some(self.make_token(kind))}
-            '<' => {let kind = self.one_or_two('=',TokenList::Less, TokenList::Lesser); 
+            '<' => {let kind = self.one_or_two('=',TokenList::Less, TokenList::LessEql); 
                     Some(self.make_token(kind))}
 
             ' ' | '\r' | '\t' => None,
