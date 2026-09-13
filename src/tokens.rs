@@ -17,37 +17,49 @@ pub enum TokenList{
     
     // need lookahead
     Not, 
-    //NotEqual,
+    NotEqual,
     Assign,
-    //EqualTo,
+    EqualTo,
     Greater,
-    //GreaterEql, 
+    GreaterEql, 
     Less,
-    //LessEql,
+    LessEql,
 
-    Engk, //EOF
+    Engk, // EOF
+}
+
+// define what values a token can have
+#[derive(Debug, Clone)]
+pub enum Literal {
+    Str(String),
+    Num(f64),
+    None,
+}
+
+impl::fmt Display for Literal {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Literal::Str(s) => write!(f, "{s}"),
+            Literal::Num(n) => write!(f, "{n}"),
+            Literal::None   => write!(f, "null"),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
 pub struct Token{
     pub token_type: TokenList,
-    //pub lexeme: String,
-    //pub literal: char,
-    //pub line: usize,
+    pub lexeme: String,
+    pub literal: char,
+    pub line: usize,
 }
 
-impl Token {
-    pub fn to_string(&self) -> String {
-        //let str = if self.literal == '\0' {
-        //    "null".to_string()
-       // } 
-        //else {
-        //    self.literal.to_string()
-        //};
-
-        format!(
-            "Token (type={:?})",
-            self.token_type
+impl fmt:: Display for Token {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Token(type={?}, lexeme={}, literal={}, line={})",
+            self.token_type, self.lexeme, self.literal, self.line
         )
     }
 }
