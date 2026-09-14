@@ -8,6 +8,7 @@ pub struct Scanner {
     emitted_eof: bool,
 }
 
+// scan error is returned as data instead of being printed on the spot
 #[derive(Debug)]
 pub struct ScanError {
     pub line: usize,
@@ -35,14 +36,19 @@ impl Scanner {
         c
     }
 
+    //answers the next character without consuming it
     fn peek(&self) -> char {
         if self.at_end() {'\0'} else {self.source[self.current]}
     }
 
+    //one char further than peek()
+    //exists for numeric literals where it might be a float
     fn peek_next(&self) -> char {
         if self.current +1 >= self.source.len() {'\0'} else {self.source[self.current +1]}
     }
 
+    //advance only if the next char matches
+    //helps form two-char operators without misreading single chars
     fn peek_match(&mut self, expected: char) -> bool {
         if self.at_end() || self.source[self.current] != expected {
             return false
@@ -51,9 +57,14 @@ impl Scanner {
         true
     }
 
+    //shared helper for deciding whether it's two-char or one-char 
+    //avoids repeating if-else statements
     fn one_or_two(&mut self, second:char, one: TokenList, two:TokenList) -> TokenList {
         if self.peek_match(second){two} else {one}
     }
+
+    // slice the source once to build the lexeme
+    // keeps scan arms simple and avoisds per‑char accumulation.
 
     fn make_token(&self, token_type: TokenList) -> Token {
         let lexeme: String = self.source[self.start..self.current].iter().collect();
@@ -65,6 +76,8 @@ impl Scanner {
         }
     }
 
+    // variant of make_token for tokens that carry a real value
+    // so that operators can use the simpler make_token without writing Literal::None everywhere
     fn make_token_literal(&self, token_type:TokenList, literal: Literal) -> Token {
         let lexeme: String = self.source[self.start..self.current].iter().collect();
         Token {
@@ -116,7 +129,8 @@ impl Scanner {
         })
     }
 
-    //for identifiers, consumer all characters then check keyword table
+    //for identifiers, consume all characters then check keyword table
+    //checking as it goes would misidentify identifiers that starts with keywords
     fn identifier(&mut self) -> Token {
         while is_identifier_continue(self.peek()) {
             self.advance();
