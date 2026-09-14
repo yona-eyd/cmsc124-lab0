@@ -154,7 +154,6 @@ impl Scanner {
             '+' => Some(self.make_token(TokenList::Plus)),
             '-' => Some(self.make_token(TokenList::Minus)),
             '*' => Some(self.make_token(TokenList::Star)),
-            '/' => Some(self.make_token(TokenList::Slash)),
             '%' => Some(self.make_token(TokenList::Modulo)),
             ';' => Some(self.make_token(TokenList::Semicolon)),
 
@@ -167,6 +166,17 @@ impl Scanner {
             '<' => {let kind = self.one_or_two('=',TokenList::Less, TokenList::LessEql); 
                     Some(self.make_token(kind))}
 
+            '/' => {
+                if self.peek_match('/') {
+                    while self.peek() != '\n' && !self.at_end() {
+                        self.advance();
+                    }
+                    None // if comment, discard
+                } else {
+                    Some(self.make_token(TokenList::Slash))
+                }
+            }
+            
             ' ' | '\r' | '\t' => None,
             '\n' =>{self.line += 1;
                     None }
