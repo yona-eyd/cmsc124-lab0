@@ -1,5 +1,5 @@
   {
-    "ext": ".cord",
+    "ext": ".src",
     "flag": "--tokenize",
     "mode": "sidecar"
   }
