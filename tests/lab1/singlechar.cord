@@ -1,1 +1,1 @@
-(+)
+if (57+10) == 67 {print "hello"} else {print "womp womp"}
