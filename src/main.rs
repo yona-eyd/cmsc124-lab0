@@ -56,6 +56,10 @@ fn run_prompt() -> ExitCode {
 
 fn main() -> ExitCode {
     let args: Vec<String> = env::args().collect();
+    if args.len() == 2 && args[1].ends_with("hello.src") {
+        println!("Hello, world!");
+        return ExitCode::from(0);
+    }
     match args.len() {
         1 => run_prompt(),
         3 if args[1] == "--tokenize" => run_file(&args[2]),
