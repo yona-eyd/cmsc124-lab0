@@ -1,11 +1,14 @@
 mod tokens;
 mod scanner;
+mod parser;
 
 use scanner::Scanner;
 use std::env;
 use std::fs;
 use std::io::{self, Write};
 use std::process::ExitCode;
+use tokens::{Token, TokenList, Literal};
+use parser::Paresr;
 
 fn run(source: &str) -> bool {
     let scanner = Scanner::new(source);
