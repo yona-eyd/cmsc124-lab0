@@ -16,6 +16,7 @@ pub enum TokenList{
     Slash,
     Modulo,
     Semicolon,
+    Colon,
     
     // need lookahead
     Not, 
@@ -26,17 +27,17 @@ pub enum TokenList{
     GreaterEql, 
     Less,
     LessEql,
+    Arrow,
 
     Engk, // EOF
 
     //identifiers
     And,
-    If,
-    Else,
+    When,
     False,
     True,
-    For,
-    While,
+    Evolve,
+    Until,
     Nil,
     Or,
     Print,
@@ -46,6 +47,10 @@ pub enum TokenList{
     Number,
     StringLit,
     Identifier,
+
+    Law,
+    Entity,
+
 }
 
 // define what values a token can have

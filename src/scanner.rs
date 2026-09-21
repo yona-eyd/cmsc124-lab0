@@ -152,11 +152,14 @@ impl Scanner {
             ',' => Some(self.make_token(TokenList::Comma)),
             '.' => Some(self.make_token(TokenList::Dot)),
             '+' => Some(self.make_token(TokenList::Plus)),
-            '-' => Some(self.make_token(TokenList::Minus)),
             '*' => Some(self.make_token(TokenList::Star)),
             '%' => Some(self.make_token(TokenList::Modulo)),
             ';' => Some(self.make_token(TokenList::Semicolon)),
+            ':' => Some(self.make_token(TokenList::Colon)),
 
+
+            '-' => {let kind = self.one_or_two('>',TokenList::Minus, TokenList::Arrow); 
+                    Some(self.make_token(kind))}
             '!' => {let kind = self.one_or_two('=',TokenList::Not, TokenList::NotEqual); 
                     Some(self.make_token(kind))}
             '=' => {let kind = self.one_or_two('=',TokenList::Assign, TokenList::EqualTo); 
@@ -165,6 +168,8 @@ impl Scanner {
                     Some(self.make_token(kind))}
             '<' => {let kind = self.one_or_two('=',TokenList::Less, TokenList::LessEql); 
                     Some(self.make_token(kind))}
+            
+
 
             '/' => {
                 if self.peek_match('/') {
@@ -212,17 +217,18 @@ fn is_identifier_continue(c:char) -> bool {
 fn keyword_type(text: &str) -> Option<TokenList> {
     Some(match text {
         "and" => TokenList::And,
-        "else" => TokenList::Else,
         "false" => TokenList::False,
         "true" => TokenList::True,
-        "for" => TokenList::For,
-        "while" => TokenList::While,
-        "if" => TokenList::If,
+        "evolve" => TokenList::Evolve,
+        "until" => TokenList::Until,
+        "when" => TokenList::When,
         "nil" => TokenList::Nil,
         "or" => TokenList::Or,
         "print" => TokenList::Print,
         "return" => TokenList::Return,
         "var" => TokenList::Var,
+        "law" => TokenList::Law,
+        "entity" => TokenList::Entity,
         _ => return None,
     })
 }
