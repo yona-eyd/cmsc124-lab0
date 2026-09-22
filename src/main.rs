@@ -7,10 +7,10 @@ use std::env;
 use std::fs;
 use std::io::{self, Write};
 use std::process::ExitCode;
-use tokens::{Token, TokenList, Literal};
-use parser::Paresr;
+use tokens::{Literal, Token, TokenList};
+use parser::Parser;
 
-fn run(source: &str) -> bool {
+fn run_tokenizer(source: &str) -> bool {
     let scanner = Scanner::new(source);
     match scanner.scan_tokens() {
         Ok(tokens) => {
@@ -28,7 +28,73 @@ fn run(source: &str) -> bool {
     }
 }
 
-fn run_file(path: &str) -> ExitCode {
+fn split_by_line(tokens: Vec<Token>) -> Vec<Vec<Token>> {
+    let mut groups: Vec<Vec<Token>> = Vec::new();
+    let mut current_line: Option<usize> = None;
+ 
+    for tok in tokens {
+        if tok.token_type == TokenList::Engk {
+            break;
+        }
+        match current_line {
+            Some(line) if line == tok.line => {
+                groups.last_mut().unwrap().push(tok);
+            }
+            _ => {
+                current_line = Some(tok.line);
+                groups.push(vec![tok]);
+            }
+        }
+    }
+ 
+    for group in groups.iter_mut() {
+        let line = group.last().map(|t| t.line).unwrap_or(1);
+        group.push(Token {
+            token_type: TokenList::Engk,
+            lexeme: String::new(),
+            literal: Literal::None,
+            line,
+        });
+    }
+ 
+    groups
+}
+ 
+fn run_parse(source: &str) -> bool {
+    let scanner = Scanner::new(source);
+    let tokens = match scanner.scan_tokens() {
+        Ok(t) => t,
+        Err(errors) => {
+            for err in &errors {
+                eprintln!("[line {}] Error: {}", err.line, err.message);
+            }
+            return false;
+        }
+    };
+ 
+    let mut outputs = Vec::new();
+    let mut ok = true;
+ 
+    for group in split_by_line(tokens) {
+        let mut parser = Parser::new(group);
+        match parser.expression() {
+            Ok(expr) => outputs.push(expr.print()),
+            Err(e) => {
+                eprintln!("[line {}] Error: {}", e.line, e.message);
+                ok = false;
+            }
+        }
+    }
+ 
+    if ok {
+        for line in outputs {
+            println!("{line}");
+        }
+    }
+    ok
+}
+
+fn run_file_with(path: &str, run: fn(&str)-> bool) -> ExitCode {
     let source = match fs::read_to_string(path) {
         Ok(s) => s,
         Err(e) => {
@@ -52,9 +118,24 @@ fn run_prompt() -> ExitCode {
         if stdin.read_line(&mut line).unwrap_or(0) == 0 {
             break; 
         }
-        run(&line);
+        let scanner = Scanner::new(&line);
+        match scanner.scan_tokens() {
+            Ok(tokens) => {
+                let mut parser = Parser::new(tokens);
+                match parser.expression() {
+                    Ok(expr) => println!("{}", expr.print()),
+                    Err(e) => eprintln!("[line {}] Error: {}", e.line, e.message),
+                }
+            }
+            Err(errors) => {
+                for err in &errors {
+                    eprintln!("[line {}] Error: {}", err.line, err.message);
+                }
+            }
+        }
     }
     ExitCode::from(0)
+
 }
 
 fn main() -> ExitCode {
@@ -65,7 +146,8 @@ fn main() -> ExitCode {
     }
     match args.len() {
         1 => run_prompt(),
-        3 if args[1] == "--tokenize" => run_file(&args[2]),
+        3 if args[1] == "--tokenize" => run_file_with(&args[2], run_tokenizer),
+        3 if args[1] == "--tokenize" => run_file_with(&args[2], run_parse),
         _ => {
             eprintln!("Usage: scanner [--tokenize <path>]");
             ExitCode::from(64)
