@@ -2,15 +2,20 @@ use crate::tokens::{Literal, Token, TokenList};
 
 #[derive(Debug)]
 pub enum Expr {
-    Literal(f64),
+    Literal(Literal),
     Binary {
         left:   Box<Expr>,
-        op:     TokenList,
+        op:     Token,
         right:  Box<Expr>,
     },
     Grouping(Box<Expr>)
 }
 
+#[derive(Debug)]
+pub struct ParseError {
+    pub line: usize,
+    pub message: String,
+}
 pub struct Parser {
     tokens: Vec<Token>,
     current: usize,
@@ -83,60 +88,67 @@ impl Parser {
     // ** RECURSIVE DESCENT FUNCTIONS **
     
     // expression → term
-    pub fn expression(&mut self) -> Expr {
+    pub fn expression(&mut self) -> Result<Expr , ParseError> {
         self.term()
     }
 
     // term → factor ( ("+" | "-") factor )*
-    fn term(&mut self) -> Expr {
-        let mut node = self.factor();
+    fn term(&mut self) -> Result<Expr , ParseError> {
+        let mut node = self.factor()?;
 
-        while let Some(op) = self.match_token(&[TokenList::Plus, TokenList::Minus]) {
-            let right = self.factor();
+        while let Some(_) = self.match_token(&[TokenList::Plus, TokenList::Minus]) {
+            let op = self.previous().clone();
+            let right = self.factor()?;
             node = Expr::Binary {
                 left: Box::new(node),
                 op,
                 right: Box::new(right),
             };
         }
-        node
+        Ok(node)
     }
     
     // factor → NUMBER | "(" expression ")"
-    fn factor(&mut self) -> Expr {
+    fn factor(&mut self) -> Result<Expr , ParseError> {
         match &self.peek().token_type {
             TokenList::Number => {
-                let val = match &self.peek().literal {
-                    Literal::Num(n) => *n,
-                    _ => panic!("Expected numeric literal"),
-                };
+                let val = self.peek().literal.clone();
                 self.advance();
-                Expr::Literal(val)
+                Ok(Expr::Literal(val))
             }
+            
+            TokenList::StringLit => {
+                let val = self.peek().literal.clone();
+                self.advance();
+                Ok(Expr::Literal(val))
+            }
+            
+
             TokenList::LeftParen => {
-                self.advance();     // consumes left paren
-                let expr = self.expression();
-                self.match_token(&[TokenList::RightParen]);   // consumes left paren
-                Expr::Grouping(Box::new(expr))
+                self.advance(); // consumes '('
+                let expr = self.expression()?;
+                self.consume(TokenList::RightParen, "Expect ')' after expression.")?;
+                Ok(Expr::Grouping(Box::new(expr)))
             }
-            _ => panic!("Unexpected token: {:?}", self.peek()),
+            _ => Err(self.error(self.peek(), "Expect expression.")),
         }
     }
 }
 
+
 impl Expr {
     pub fn print(&self) -> String {
         match self {
-            Expr::Literal(n) => format!("{}", n),
+            Expr::Literal(lit) => match lit {
+                Literal::Str(s) => s.clone(),
+                Literal::Num(n) => format!("{n}"),
+                Literal::None => "nil".to_string(),
+            },
             Expr::Binary { left, op, right } => {
-                let op_str = match op {
-                    TokenList::Plus => "+",
-                    TokenList::Minus => "-",
-                    _=> "?",
-                };
-                format!("({} {} {})", op_str, left.print(), right.print())
+                format!("({} {} {})", left.print(), op.lexeme, right.print())
             }
             Expr::Grouping(expr) => format!("(group {})", expr.print()),
         }
     }
 }
+
